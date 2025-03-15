@@ -2,12 +2,38 @@ import { db } from './firebase';
 import { collection, addDoc, getDocs, query, orderBy, limit, doc, getDoc, updateDoc, where } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import { Entry, Challenge, Dish, Restaurant } from '../types';
-import { detectCuisineType } from '../googlePlaces';
 
 // Collection references
 const entriesCollection = 'entries';
 const challengesCollection = 'challenges';
 const userChallengesCollection = 'userChallenges';
+
+/**
+ * Detect cuisine type based on restaurant name and address
+ * This is a simple placeholder that would be replaced with better logic or API
+ */
+function detectCuisineType(restaurantName: string, restaurantAddress: string): string[] {
+  const name = restaurantName.toLowerCase();
+  const possibleCuisines: [string, string[]][] = [
+    ['italian', ['pizza', 'pasta', 'italian', 'trattoria', 'pizzeria']],
+    ['mexican', ['taco', 'burrito', 'mexican', 'cantina']],
+    ['chinese', ['chinese', 'dim sum', 'wok', 'dumpling']],
+    ['japanese', ['sushi', 'ramen', 'japanese', 'izakaya']],
+    ['indian', ['indian', 'curry', 'tandoori', 'spice']],
+    ['thai', ['thai', 'pad thai', 'bangkok']],
+    ['vietnamese', ['vietnamese', 'pho', 'banh mi']],
+    ['american', ['burger', 'grill', 'american', 'steak']],
+    ['french', ['french', 'bistro', 'cafe', 'patisserie']],
+  ];
+  
+  const detectedCuisines = possibleCuisines
+    .filter(([_, keywords]) => 
+      keywords.some(keyword => name.includes(keyword))
+    )
+    .map(([cuisine]) => cuisine);
+  
+  return detectedCuisines.length ? detectedCuisines : ['unknown'];
+}
 
 /**
  * Add a new meal entry to Firestore
