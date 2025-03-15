@@ -1,9 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search } from 'lucide-react';
 import { Restaurant } from '@/lib/types';
-import { searchPlaces } from '@/lib/googlePlaces';
+
+// Add Google Maps types
+declare global {
+  interface Window {
+    google: typeof google;
+  }
+}
 
 interface RestaurantSearchProps {
   onSelect: (restaurant: Restaurant) => void;
@@ -16,45 +22,106 @@ export default function RestaurantSearch({ onSelect }: RestaurantSearchProps) {
   const [restaurantAddress, setRestaurantAddress] = useState('');
   const [searchResults, setSearchResults] = useState<Restaurant[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  
+  const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
+  const placesService = useRef<google.maps.places.PlacesService | null>(null);
+  const dummyMapDiv = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (window.google && !autocompleteService.current) {
+      autocompleteService.current = new google.maps.places.AutocompleteService();
+      // Create a dummy map div for PlacesService (required)
+      if (!dummyMapDiv.current) {
+        dummyMapDiv.current = document.createElement('div');
+        placesService.current = new google.maps.places.PlacesService(dummyMapDiv.current);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     const delaySearch = setTimeout(async () => {
-      if (searchTerm.trim().length > 2) {
+      if (searchTerm.trim().length > 2 && autocompleteService.current) {
         setIsSearching(true);
         try {
-          const results = await searchPlaces(searchTerm);
-          setSearchResults(results);
+          const request: google.maps.places.AutocompletionRequest = {
+            input: searchTerm,
+            types: ['establishment'],
+          };
+
+          autocompleteService.current.getPlacePredictions(
+            request,
+            (
+              predictions: google.maps.places.AutocompletePrediction[] | null,
+              status: google.maps.places.PlacesServiceStatus
+            ) => {
+              if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+                const results: Restaurant[] = predictions.map((prediction: google.maps.places.AutocompletePrediction) => ({
+                  name: prediction.structured_formatting?.main_text || prediction.description,
+                  address: prediction.structured_formatting?.secondary_text || '',
+                  placeId: prediction.place_id,
+                }));
+                setSearchResults(results);
+              } else {
+                setSearchResults([]);
+              }
+              setIsSearching(false);
+            }
+          );
         } catch (error) {
           console.error('Error searching places:', error);
-        } finally {
           setIsSearching(false);
         }
       } else {
         setSearchResults([]);
       }
     }, 500);
-    
+
     return () => clearTimeout(delaySearch);
   }, [searchTerm]);
-  
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
   };
-  
+
   const handleSelectRestaurant = (restaurant: Restaurant) => {
-    onSelect(restaurant);
+    if (placesService.current && restaurant.placeId) {
+      const request: google.maps.places.PlaceDetailsRequest = {
+        placeId: restaurant.placeId,
+        fields: ['name', 'formatted_address', 'url'],
+      };
+
+      placesService.current.getDetails(
+        request,
+        (
+          place: google.maps.places.PlaceResult | null,
+          status: google.maps.places.PlacesServiceStatus
+        ) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+            onSelect({
+              name: place.name || restaurant.name,
+              address: place.formatted_address || restaurant.address,
+              placeId: restaurant.placeId,
+              url: place.url,
+            });
+          } else {
+            onSelect(restaurant);
+          }
+        }
+      );
+    } else {
+      onSelect(restaurant);
+    }
   };
-  
+
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (restaurantName && restaurantAddress) {
       onSelect({
         name: restaurantName,
-        address: restaurantAddress
+        address: restaurantAddress,
       });
     }
   };
-  
+
   return (
     <div>
       {!manualEntry ? (
@@ -83,20 +150,20 @@ export default function RestaurantSearch({ onSelect }: RestaurantSearchProps) {
               </button>
             </div>
           </form>
-          
+
           {/* Search Results */}
           {isSearching && (
             <div className="text-center py-4">
               <div className="animate-pulse text-gray-500">Searching...</div>
             </div>
           )}
-          
+
           {!isSearching && searchTerm.length > 2 && searchResults.length === 0 && (
             <div className="text-center py-4 text-gray-500">
               No results found. Try a different search or enter details manually.
             </div>
           )}
-          
+
           {searchResults.length > 0 && (
             <div className="mt-2 border rounded-md overflow-hidden divide-y">
               {searchResults.map((result, index) => (
