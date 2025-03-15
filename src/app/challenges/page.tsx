@@ -23,6 +23,10 @@ export default function ChallengesPage() {
     }
   }, [user, authLoading, router]);
 
+  useEffect(() => {
+    loadChallenges();
+  }, [loadChallenges]);
+
   async function loadChallenges() {
     try {
       const response = await fetch(`/api/challenges?userId=${user?.uid}`);

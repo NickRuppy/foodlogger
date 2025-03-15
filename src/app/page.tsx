@@ -7,6 +7,7 @@ import { PlusCircle } from "lucide-react";
 import { Entry, Challenge } from '@/lib/types';
 import { useAuth } from '@/lib/hooks/useAuth';
 import ChallengeCard from '@/app/components/ChallengeCard';
+import Image from 'next/image';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -181,10 +182,12 @@ export default function Home() {
                   <div key={meal.id} className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                     {meal.dishes[0]?.photo && (
                       <div className="h-48 overflow-hidden">
-                        <img 
+                        <Image 
                           src={meal.dishes[0].photo} 
                           alt={meal.dishes[0].name} 
-                          className="w-full h-full object-cover"
+                          width={300}
+                          height={200}
+                          className="w-full h-full object-cover rounded-t-lg"
                         />
                       </div>
                     )}

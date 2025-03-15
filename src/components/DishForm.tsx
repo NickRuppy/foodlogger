@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import StarRating from './StarRating';
 import { Dish } from '@/lib/types';
+import Image from 'next/image';
 
 interface DishFormProps {
   onAdd: (dish: Dish) => void;
@@ -18,6 +19,7 @@ export default function DishForm({ onAdd }: DishFormProps) {
   const [vibeRating, setVibeRating] = useState(0);
   const [comments, setComments] = useState('');
   const [isCompressing, setIsCompressing] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,12 +102,14 @@ export default function DishForm({ onAdd }: DishFormProps) {
         // Compress the image before storing
         const compressedImage = await compressImage(file);
         setPhoto(compressedImage);
+        setPreviewUrl(compressedImage);
       } catch (error) {
         console.error('Error compressing image:', error);
         // Fallback to original image if compression fails
         const reader = new FileReader();
         reader.onloadend = () => {
           setPhoto(reader.result as string);
+          setPreviewUrl(reader.result as string);
         };
         reader.readAsDataURL(file);
       } finally {
@@ -150,7 +154,7 @@ export default function DishForm({ onAdd }: DishFormProps) {
           </label>
           {photo && (
             <div className="h-20 w-20 overflow-hidden rounded-md border">
-              <img src={photo} alt="Dish preview" className="h-full w-full object-cover" />
+              <Image src={photo} alt="Dish preview" width={80} height={80} className="h-full w-full object-cover" />
             </div>
           )}
         </div>
@@ -225,6 +229,18 @@ export default function DishForm({ onAdd }: DishFormProps) {
           Add Dish
         </button>
       </div>
+      
+      {previewUrl && (
+        <div className="mt-4">
+          <Image
+            src={previewUrl}
+            alt="Preview"
+            width={300}
+            height={200}
+            className="max-w-full h-auto rounded-lg"
+          />
+        </div>
+      )}
     </form>
   );
 } 
