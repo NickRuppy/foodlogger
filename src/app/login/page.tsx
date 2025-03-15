@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import Image from 'next/image';
 
 export default function LoginPage() {
-  const { user, signInWithGoogle, error, loading } = useAuth();
+  const { user, signInWithGoogle, error, authLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function LoginPage() {
     }
   };
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
