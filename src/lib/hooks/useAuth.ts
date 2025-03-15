@@ -1,4 +1,14 @@
 import { useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
+import { User } from 'firebase/auth';
 
-export const useAuth = () => useContext(AuthContext);
+export interface AuthContextType {
+  user: User | null;
+  authLoading: boolean;
+  signInWithGoogle: () => Promise<void>;
+  signOut: () => Promise<void>;
+}
+
+export function useAuth() {
+  return useContext(AuthContext);
+}

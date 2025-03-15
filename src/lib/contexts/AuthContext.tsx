@@ -5,18 +5,11 @@ import { signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut, onIdTo
 import { User } from "firebase/auth";
 import { auth } from "../firebase/firebase";
 import Cookies from 'js-cookie';
+import { AuthContextType } from '../hooks/useAuth';
 
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  error: string | null;
-  signInWithGoogle: () => Promise<void>;
-  signOut: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   user: null,
-  loading: true,
+  authLoading: true,
   error: null,
   signInWithGoogle: async () => {},
   signOut: async () => {},
@@ -24,7 +17,7 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -61,12 +54,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Remove the cookie when user is not authenticated
             Cookies.remove('__session');
           }
-          setLoading(false);
+          setAuthLoading(false);
         });
       } catch (error) {
         console.error('Error in auth initialization:', error);
         setError(error instanceof Error ? error.message : 'Failed to initialize authentication');
-        setLoading(false);
+        setAuthLoading(false);
       }
     };
 
@@ -83,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       setError(null);
-      setLoading(true);
+      setAuthLoading(true);
       console.log('Starting Google sign in');
       
       if (!auth) {
@@ -102,14 +95,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(error instanceof Error ? error.message : 'Failed to sign in with Google');
       throw error;
     } finally {
-      setLoading(false);
+      setAuthLoading(false);
     }
   };
 
   const signOutUser = async () => {
     try {
       setError(null);
-      setLoading(true);
+      setAuthLoading(true);
       console.log('Starting sign out');
       
       if (!auth) {
@@ -124,15 +117,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(error instanceof Error ? error.message : 'Failed to sign out');
       throw error;
     } finally {
-      setLoading(false);
+      setAuthLoading(false);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, signInWithGoogle, signOut: signOutUser }}>
+    <AuthContext.Provider value={{ user, authLoading, error, signInWithGoogle, signOut: signOutUser }}>
       {children}
     </AuthContext.Provider>
   );
 }
-
-export { AuthContext };

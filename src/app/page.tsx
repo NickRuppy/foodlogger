@@ -12,9 +12,9 @@ import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function Home() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, authLoading } = useAuth();
   const router = useRouter();
-  const [recentMeals, setRecentMeals] = useState<Entry[]>([]);
+  const [meals, setMeals] = useState<Entry[]>([]);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,34 +22,17 @@ export default function Home() {
     if (!user) return;
     try {
       console.log('Starting loadData with user:', user?.uid);
-      
-      // Fetch challenges from API
-      const challengesResponse = await fetch(`/api/challenges?userId=${user?.uid}`);
-      const challengesData = await challengesResponse.json();
-      console.log('Challenges data:', challengesData);
-      
-      // Fetch recent entries from API
-      console.log('Fetching entries for user:', user?.uid);
-      const entriesResponse = await fetch(`/api/entries/recent?userId=${user?.uid}`);
-      console.log('Entries response status:', entriesResponse.status);
-      const entriesData = await entriesResponse.json();
-      console.log('Entries data:', entriesData);
-      
-      if (challengesData.success) {
-        setChallenges(challengesData.challenges);
-      } else {
-        console.error("Error loading challenges:", challengesData.error);
-      }
-      
-      if (entriesData.success) {
-        console.log('Setting recent meals:', entriesData.entries);
-        setRecentMeals(entriesData.entries);
-      } else {
-        console.error("Error loading entries:", entriesData.error);
-      }
+      const mealsRef = collection(db, 'meals');
+      const q = query(mealsRef, where('userId', '==', user.uid), orderBy('dateVisited', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const mealsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Entry[];
+      setMeals(mealsData);
+      setLoading(false);
     } catch (error) {
-      console.error("Error loading data:", error);
-    } finally {
+      console.error('Error loading meals:', error);
       setLoading(false);
     }
   }, [user]);
@@ -116,7 +99,7 @@ export default function Home() {
   // Use placeholder data until API is properly connected
   const displayChallenges = challenges.length > 0 ? challenges : placeholderChallenges;
 
-  if (authLoading || !user) {
+  if (loading || !user) {
     return (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600 mx-auto"></div>
@@ -179,9 +162,9 @@ export default function Home() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">Recent Meals</h2>
             
-            {recentMeals.length > 0 ? (
+            {meals.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {recentMeals.map((meal) => (
+                {meals.map((meal) => (
                   <div key={meal.id} className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                     {meal.dishes[0]?.photo && (
                       <div className="h-48 overflow-hidden">

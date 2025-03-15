@@ -5,14 +5,21 @@ import { useRouter } from 'next/navigation';
 import { Challenge } from '@/lib/types';
 import { useAuth } from '@/lib/hooks/useAuth';
 import ChallengeCard from '@/app/components/ChallengeCard';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function ChallengesPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, authLoading } = useAuth();
   const router = useRouter();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+      return;
+    }
+  }, [user, authLoading, router]);
 
   const loadChallenges = useCallback(async () => {
     if (!user) return;
@@ -23,61 +30,31 @@ export default function ChallengesPage() {
       const challengesData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as Challenge[];
       setChallenges(challengesData);
+      setLoading(false);
     } catch (error) {
       console.error('Error loading challenges:', error);
+      setLoading(false);
     }
   }, [user]);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-      return;
-    }
-
-    if (user) {
-      loadChallenges();
-    }
-  }, [user, authLoading, router]);
 
   useEffect(() => {
     loadChallenges();
   }, [loadChallenges]);
 
-  if (authLoading || !user) {
-    return (
-      <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading...</p>
-      </div>
-    );
+  if (loading) {
+    return <div>Loading...</div>;
   }
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Your Challenges</h1>
-        
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading challenges...</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {challenges.map((challenge) => (
-              <ChallengeCard key={challenge.id} challenge={challenge} />
-            ))}
-          </div>
-        )}
-        
-        {!loading && challenges.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-600">No challenges found. They will be created automatically when you start logging meals!</p>
-          </div>
-        )}
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">My Challenges</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {challenges.map((challenge) => (
+          <ChallengeCard key={challenge.id} challenge={challenge} />
+        ))}
       </div>
-    </main>
+    </div>
   );
 } 
