@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import { PlusCircle } from "lucide-react";
@@ -8,6 +8,8 @@ import { Entry, Challenge } from '@/lib/types';
 import { useAuth } from '@/lib/hooks/useAuth';
 import ChallengeCard from '@/app/components/ChallengeCard';
 import Image from 'next/image';
+import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -16,18 +18,8 @@ export default function Home() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-      return;
-    }
-
-    if (user) {
-      loadData();
-    }
-  }, [user, authLoading, router]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
+    if (!user) return;
     try {
       console.log('Starting loadData with user:', user?.uid);
       
@@ -60,7 +52,18 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [user]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+      return;
+    }
+
+    if (user) {
+      loadData();
+    }
+  }, [user, authLoading, router, loadData]);
 
   // Use placeholder data when API calls fail
   const placeholderChallenges: Challenge[] = [

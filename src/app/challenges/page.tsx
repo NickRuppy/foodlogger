@@ -1,16 +1,34 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Challenge } from '@/lib/types';
 import { useAuth } from '@/lib/hooks/useAuth';
 import ChallengeCard from '@/app/components/ChallengeCard';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function ChallengesPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const loadChallenges = useCallback(async () => {
+    if (!user) return;
+    try {
+      const challengesRef = collection(db, 'challenges');
+      const q = query(challengesRef, where('userId', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+      const challengesData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setChallenges(challengesData);
+    } catch (error) {
+      console.error('Error loading challenges:', error);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -26,23 +44,6 @@ export default function ChallengesPage() {
   useEffect(() => {
     loadChallenges();
   }, [loadChallenges]);
-
-  async function loadChallenges() {
-    try {
-      const response = await fetch(`/api/challenges?userId=${user?.uid}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setChallenges(data.challenges);
-      } else {
-        console.error("Error loading challenges:", data.error);
-      }
-    } catch (error) {
-      console.error("Error loading challenges:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   if (authLoading || !user) {
     return (
