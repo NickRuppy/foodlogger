@@ -159,12 +159,6 @@ export default function RestaurantSearch({ onSelect }: RestaurantSearchProps) {
           </div>
         </form>
       )}
-      
-      <div className="mt-6 text-sm text-gray-500">
-        <p>
-          Note: A Google Maps API key will be required to enable restaurant search functionality.
-        </p>
-      </div>
     </div>
   );
 } 

@@ -14,22 +14,16 @@ export async function GET(request: Request) {
   }
   
   try {
-    // Use the new Places API v1
     console.log('Searching places with query:', query);
     
+    // Use the Places Autocomplete API
     const response = await fetch(
-      `https://places.googleapis.com/v1/places:searchText`,
+      `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&types=establishment&key=${apiKey}`,
       {
-        method: 'POST',
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.id'
-        },
-        body: JSON.stringify({
-          textQuery: query,
-          languageCode: 'en'
-        })
+          'Content-Type': 'application/json'
+        }
       }
     );
     
@@ -38,24 +32,14 @@ export async function GET(request: Request) {
     }
     
     const data = await response.json();
-    console.log('Places API v1 response received');
+    console.log('Places API response received');
     
-    // Transform the response to match the format expected by the client
-    if (data.places && data.places.length > 0) {
-      const predictions = data.places.map((place: any) => ({
-        place_id: place.id,
-        description: `${place.displayName?.text || query} - ${place.formattedAddress || ''}`,
-        structured_formatting: {
-          main_text: place.displayName?.text || query,
-          secondary_text: place.formattedAddress || ''
-        }
-      }));
-      
+    if (data.predictions && data.predictions.length > 0) {
       return NextResponse.json({
-        predictions,
+        predictions: data.predictions,
         status: 'OK'
       });
-    } else if (data.places && data.places.length === 0) {
+    } else if (data.predictions && data.predictions.length === 0) {
       return NextResponse.json({
         predictions: [],
         status: 'ZERO_RESULTS'
