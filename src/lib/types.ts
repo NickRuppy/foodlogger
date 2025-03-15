@@ -7,7 +7,7 @@ export type Restaurant = {
 };
 
 // Dish related types
-export type Dish = {
+export interface Dish {
   id: string;
   name: string;
   photo?: string;
@@ -16,31 +16,29 @@ export type Dish = {
   tasteRating: number;
   vibeRating: number;
   comments?: string;
-};
+}
 
 // Entry (a visit to a restaurant with multiple dishes)
-export type Entry = {
+export interface Entry {
   id: string;
   userId: string;
   restaurantName: string;
   restaurantAddress: string;
   googlePlaceId?: string;
   googleMapsUrl?: string;
-  dateVisited: string | Date;
+  dateVisited: string;
   dishes: Dish[];
-};
+}
 
 // Challenge related types
-export type ChallengeType = 'cuisine' | 'restaurant' | 'rating' | 'dish';
-
-export type Challenge = {
+export interface Challenge {
   id: string;
   userId: string;
   name: string;
   description: string;
-  type: ChallengeType;
-  criteria: string[];
+  type: 'cuisine' | 'restaurant' | 'rating' | 'dish';
   progress: number;
   goal: number;
+  criteria: string[];
   completed: boolean;
-}; 
+} 
