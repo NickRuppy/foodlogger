@@ -20,6 +20,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "firebasestorage.googleapis.com",
       },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
     ],
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
@@ -27,8 +31,12 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: "/api/:path*",
-        destination: "https://api.openai.com/:path*",
+        source: "/api/anthropic/:path*",
+        destination: "https://api.anthropic.com/:path*",
+      },
+      {
+        source: "/api/replicate/:path*",
+        destination: "https://api.replicate.com/:path*",
       },
     ];
   },
