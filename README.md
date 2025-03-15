@@ -31,7 +31,7 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
 
 # Google Places API
-NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=your_google_places_api_key
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 ```
 
 ### Firebase Setup
