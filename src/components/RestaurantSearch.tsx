@@ -7,7 +7,19 @@ import { Restaurant } from '@/lib/types';
 // Add Google Maps types
 declare global {
   interface Window {
-    google: typeof google;
+    google: {
+      maps: {
+        places: {
+          AutocompleteService: new () => google.maps.places.AutocompleteService;
+          PlacesService: new (attrContainer: HTMLElement) => google.maps.places.PlacesService;
+          AutocompletePrediction: google.maps.places.AutocompletePrediction;
+          PlaceResult: google.maps.places.PlaceResult;
+          PlacesServiceStatus: {
+            OK: google.maps.places.PlacesServiceStatus;
+          };
+        };
+      };
+    };
   }
 }
 
